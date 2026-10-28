@@ -227,7 +227,10 @@ async def send_message(request: Request, authorization: str | None = Header(defa
             package_id = str(package.get("packageId", f"package-{index+1}"))
             action, refs, rationale = choose_action(package)
             proposals.append({"packageId": package_id, "actionId": secrets.token_urlsafe(16), "action": action, "facts": package_facts(package), "evidenceRefs": refs, "rationale": rationale})
-        task_id, context_id = str(uuid.uuid4()), str(uuid.uuid4())
+        task_id = str(uuid.uuid4())
+        # Preserve a caller-supplied context so the result continuation can
+        # be matched exactly; generate one only for messages that omit it.
+        context_id = str(message.get("contextId") or uuid.uuid4())
         proposal = {"batchId": batch_id, "proposals": proposals}
         history = [message]
         timestamp = now()
