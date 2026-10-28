@@ -180,7 +180,9 @@ async def send_message(request: Request, authorization: str | None = Header(defa
             row = owned_task(db, continuation_task_id, principal)
             if row["state"] != "TASK_STATE_INPUT_REQUIRED":
                 raise HTTPException(status_code=409, detail="task is terminal")
-            if message.get("contextId") != row["context_id"]:
+            # Some A2A clients omit contextId on a continuation; when it is
+            # supplied, it must match the stored task context exactly.
+            if message.get("contextId") and message.get("contextId") != row["context_id"]:
                 raise HTTPException(status_code=409, detail="task context mismatch")
             parts = message.get("parts") or []
             result_data = next((p.get("data") for p in parts if p.get("mediaType") == "application/vnd.ga5.invoice-action-results+json"), None)
